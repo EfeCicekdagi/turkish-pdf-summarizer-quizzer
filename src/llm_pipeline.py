@@ -28,57 +28,97 @@ class QuizResult:
 
 class LLMService:
     """
-    Simple wrapper around a Hugging Face text2text-generation model (FLAN-T5).
+    Two-model setup:
+    - summarizer: Turkish summarization fine-tuned model (mT5)
+    - quizzer: instruction-ish model for quiz generation (FLAN-T5)
     """
 
     def __init__(
         self,
-        model_name: str = "google/flan-t5-base",
+        summarizer_model: str = "mukayese/mt5-base-turkish-summarization",
+        quiz_model: str = "google/flan-t5-base",
         device: Optional[str] = None,
     ):
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        # transformers pipeline uses device index: -1 for cpu, >=0 for cuda
         device_idx = 0 if device == "cuda" else -1
 
-        self.generator = pipeline(
+        # Summarizer pipeline (text2text-generation)
+        self.summarizer = pipeline(
             task="text2text-generation",
-            model=model_name,
+            model=summarizer_model,
+            device=device_idx,
+        )
+
+        # Quiz generator pipeline (text2text-generation)
+        self.quizzer = pipeline(
+            task="text2text-generation",
+            model=quiz_model,
             device=device_idx,
         )
 
     def _generate(
         self,
+        gen_pipe,
         prompt: str,
-        max_new_tokens: int = 256,
-        temperature: float = 0.3,
+        max_new_tokens: int,
+        temperature: float,
+        deterministic: bool = True,
     ) -> str:
-        out = self.generator(
-            prompt,
-            max_new_tokens=max_new_tokens,
-            do_sample=False,
-            num_beams=4,
-        )
+        # Deterministic generation reduces hallucinations & randomness
+        if deterministic:
+            out = gen_pipe(
+                prompt,
+                max_new_tokens=max_new_tokens,
+                do_sample=False,
+                num_beams=4,
+            )
+        else:
+            out = gen_pipe(
+                prompt,
+                max_new_tokens=max_new_tokens,
+                do_sample=True,
+                temperature=temperature,
+            )
+
         text = out[0]["generated_text"]
         return normalize_output(text)
 
     def summarize_chunks(self, chunks: List[str]) -> SummarizeResult:
-        # 1) Map: her chunk için özet
         chunk_summaries: List[str] = []
-        for i, ch in enumerate(chunks):
+
+        # MAP: each chunk summarized with Turkish summarizer
+        for ch in chunks:
             prompt = build_chunk_summarize_prompt(ch)
-            s = self._generate(prompt, max_new_tokens=220, temperature=0.3)
+            s = self._generate(
+                self.summarizer,
+                prompt,
+                max_new_tokens=220,
+                temperature=0.3,
+                deterministic=True,
+            )
             chunk_summaries.append(s)
 
-        # 2) Reduce: chunk özetlerini birleştir, final özet üret
+        # REDUCE: combine summaries and make structured final summary
         combined = "\n\n".join([f"[Özet Parça {i+1}]\n{cs}" for i, cs in enumerate(chunk_summaries)])
         final_prompt = build_final_summarize_prompt(combined)
-        final_summary = self._generate(final_prompt, max_new_tokens=320, temperature=0.2)
+        final_summary = self._generate(
+            self.summarizer,
+            final_prompt,
+            max_new_tokens=320,
+            temperature=0.2,
+            deterministic=True,
+        )
 
         return SummarizeResult(chunk_summaries=chunk_summaries, final_summary=final_summary)
 
     def generate_quiz(self, final_summary: str, n_questions: int = 5) -> QuizResult:
         prompt = build_quiz_prompt(final_summary, n_questions=n_questions)
-        quiz_text = self._generate(prompt, max_new_tokens=420, temperature=0.4)
+        quiz_text = self._generate(
+            self.quizzer,
+            prompt,
+            max_new_tokens=420,
+            temperature=0.4,
+            deterministic=False,  # quizde biraz çeşitlilik iyi
+        )
         return QuizResult(quiz_text=quiz_text)
