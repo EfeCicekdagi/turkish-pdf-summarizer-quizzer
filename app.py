@@ -104,7 +104,7 @@ with col_right:
     if "chunk_summaries" not in st.session_state:
         st.session_state.chunk_summaries = []
 
-    llm = get_llm(model_name)
+    llm = get_llm(summarizer_model, quiz_model)
 
     c1, c2 = st.columns([1, 1])
     with c1:
