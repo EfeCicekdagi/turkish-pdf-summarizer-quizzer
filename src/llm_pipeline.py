@@ -7,12 +7,12 @@ from typing import List, Optional
 from transformers import pipeline
 import torch
 
-from prompts import (
+from src.prompts import (
     build_chunk_summarize_prompt,
     build_final_summarize_prompt,
     build_quiz_prompt,
 )
-from postprocess import normalize_output
+from src.postprocess import normalize_output
 
 
 @dataclass
