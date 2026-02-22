@@ -18,8 +18,17 @@ st.caption("PDF yükle → chunk’lara böl → özetle → 5 soru üret")
 with st.sidebar:
     st.header("Ayarlar")
 
-    model_name = st.selectbox(
-        "Model",
+    summarizer_model = st.selectbox(
+        "Özet Modeli (TR)",
+        options=[
+            "mukayese/mt5-base-turkish-summarization",
+            "ozcangundes/mt5-small-turkish-summarization",
+        ],
+        index=0,
+    )
+
+    quiz_model = st.selectbox(
+        "Quiz Modeli",
         options=[
             "google/flan-t5-base",
             "google/flan-t5-large",
@@ -39,8 +48,8 @@ with st.sidebar:
 
 
 @st.cache_resource
-def get_llm(model_name: str) -> LLMService:
-    return LLMService(model_name=model_name)
+def get_llm(summarizer_model: str, quiz_model: str) -> LLMService:
+    return LLMService(summarizer_model=summarizer_model, quiz_model=quiz_model)
 
 
 col_left, col_right = st.columns([1, 1], gap="large")
