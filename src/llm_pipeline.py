@@ -57,8 +57,8 @@ class LLMService:
         out = self.generator(
             prompt,
             max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=temperature,
+            do_sample=False,
+            num_beams=4,
         )
         text = out[0]["generated_text"]
         return normalize_output(text)
