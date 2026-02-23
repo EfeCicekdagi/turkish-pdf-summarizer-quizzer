@@ -2,49 +2,73 @@
 from __future__ import annotations
 
 
-def build_chunk_summarize_prompt(chunk_text: str) -> str:
-    # FLAN-T5 için net, kısa talimatlar iyi çalışır
-    return f"""
-Aşağıdaki metni Türkçe olarak özetle.
-- 5-8 madde kullan
-- Gereksiz tekrar yapma
-- Önemli kavramları koru
+# NOTE:
+# Fine-tuned summarization models (like many mT5 summarizers) often work best
+# with RAW text or a very light "summarize:" prefix. Long instruction prompts
+# can increase hallucinations. In our updated llm_pipeline.py we pass raw text.
+# These functions are kept for experimentation / alternative models.
 
-METİN:
-{chunk_text}
-""".strip()
+
+def build_chunk_summarize_prompt(chunk_text: str) -> str:
+    """
+    Use ONLY if your summarizer model is instruction-following.
+    For many mT5 summarizers, prefer passing raw text directly.
+    """
+    # Minimal prefix style (safer than long instructions for T5-family)
+    return f"summary: {chunk_text}".strip()
 
 
 def build_final_summarize_prompt(all_chunk_summaries: str) -> str:
-    return f"""
-Aşağıdaki özet parçalarını tek bir "yapılandırılmış final özet" haline getir.
-
-ÇIKTI FORMATI:
-Ana Fikir:
-Temel Kavramlar: (virgülle)
-Önemli Maddeler:
-- ...
-- ...
-Kısa Özet (3-5 cümle):
-
-ÖZET PARÇALARI:
-{all_chunk_summaries}
-""".strip()
+    """
+    Use ONLY if your summarizer model follows instructions well.
+    Otherwise, reduce summaries hierarchically with raw text (recommended).
+    """
+    # Keep it short; avoid giving the model room to invent structure content.
+    return f"summary: {all_chunk_summaries}".strip()
 
 
 def build_quiz_prompt(final_summary: str, n_questions: int = 5) -> str:
-    # Formatı sabitlemek GitHub demosu için çok iyi durur
+    """
+    FLAN-T5 is instruction-tuned, so structured prompts help.
+    Add anti-hallucination constraints: don't invent details not in the summary.
+    """
     return f"""
-Aşağıdaki özete göre Türkçe bir mini quiz üret.
+Aşağıdaki ÖZET'e dayanarak Türkçe bir mini quiz üret.
+
+KURALLAR (ÇOK ÖNEMLİ):
+- Sadece ÖZET'te geçen bilgilere dayan. ÖZET'te olmayan kişi/kurum/olay/örnek uydurma.
+- Soruların cevabı ÖZET'ten çıkarılabilir olmalı.
+- Format dışına çıkma.
 
 İSTEKLER:
 - Toplam {n_questions} soru
-- Soru dağılımı:
+- Dağılım:
   1) 2 kısa cevap
   2) 2 çoktan seçmeli (A/B/C/D)
   3) 1 doğru/yanlış
-- En sonda "Cevap Anahtarı:" yaz ve cevapları listele
-- Sorular net ve özete bağlı olsun
+- En sonda "Cevap Anahtarı:" yaz ve cevapları 1..{n_questions} şeklinde listele.
+
+ÇIKTI FORMATI (AYNEN UYGULA):
+1) [Kısa Cevap] ...
+2) [Kısa Cevap] ...
+3) [Çoktan Seçmeli] ...
+   A) ...
+   B) ...
+   C) ...
+   D) ...
+4) [Çoktan Seçmeli] ...
+   A) ...
+   B) ...
+   C) ...
+   D) ...
+5) [Doğru/Yanlış] ...
+
+Cevap Anahtarı:
+1) ...
+2) ...
+3) ...
+4) ...
+5) ...
 
 ÖZET:
 {final_summary}
