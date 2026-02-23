@@ -13,84 +13,167 @@ class Chunk:
     char_len: int
 
 
+_WS_RE = re.compile(r"[ \t]+")
+_MULTI_NL_RE = re.compile(r"\n{2,}")
+
+
+def _normalize_text(text: str) -> str:
+    """
+    Normalize newlines + collapse excessive spaces.
+    Keeps newlines because we use them for paragraphing.
+    """
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    # collapse horizontal whitespace
+    text = _WS_RE.sub(" ", text)
+    # normalize too many blank lines
+    text = _MULTI_NL_RE.sub("\n\n", text)
+    return text.strip()
+
+
 def _split_into_paragraphs(text: str) -> List[str]:
     """
-    Paragraph split by blank lines.
+    Prefer paragraph split by blank lines.
+    Fallback: if PDF extraction produced almost no blank lines,
+    group lines into pseudo-paragraphs.
     """
-    # Normalize newlines
-    text = text.replace("\r", "\n")
-    # Split by 2+ newlines
-    parts = re.split(r"\n\s*\n", text)
-    # Clean each paragraph
-    parts = [p.strip() for p in parts if p.strip()]
-    return parts
+    text = _normalize_text(text)
+
+    # Primary: split by blank lines
+    parts = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    if len(parts) >= 2:
+        return parts
+
+    # Fallback: PDF often has line-wrapped text with single newlines
+    # Heuristic: join lines into blocks; keep a break when a line ends with
+    # sentence punctuation OR the next line looks like a new section/bullet.
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    if not lines:
+        return []
+
+    paragraphs: List[str] = []
+    buf: List[str] = []
+
+    def looks_like_new_block(line: str) -> bool:
+        return bool(re.match(r"^(\d+[\.\)]|[-•*])\s+", line)) or line.isupper()
+
+    for i, ln in enumerate(lines):
+        buf.append(ln)
+        nxt = lines[i + 1] if i + 1 < len(lines) else ""
+
+        end_of_sentence = ln.endswith((".", "!", "?", "…", ":", ";"))
+        next_is_new = bool(nxt) and looks_like_new_block(nxt)
+
+        if end_of_sentence or next_is_new:
+            paragraphs.append(" ".join(buf).strip())
+            buf = []
+
+    if buf:
+        paragraphs.append(" ".join(buf).strip())
+
+    return [p for p in paragraphs if p]
+
+
+def _smart_split_long_text(text: str, max_chars: int) -> List[str]:
+    """
+    Split a too-long paragraph into pieces without cutting words if possible.
+    Tries to split near max_chars at a whitespace boundary.
+    """
+    text = text.strip()
+    if len(text) <= max_chars:
+        return [text]
+
+    out: List[str] = []
+    start = 0
+    n = len(text)
+
+    while start < n:
+        target_end = min(start + max_chars, n)
+        if target_end == n:
+            out.append(text[start:].strip())
+            break
+
+        # Try to find a good split point (whitespace) near the end
+        split_at = text.rfind(" ", start, target_end)
+        # If no whitespace found (very rare), hard cut
+        if split_at == -1 or split_at <= start + 50:
+            split_at = target_end
+
+        out.append(text[start:split_at].strip())
+        start = split_at
+
+    return [p for p in out if p]
+
+
+def _tail_words(text: str, word_count: int) -> str:
+    """
+    Return last N words from text (safer than last N chars for PDFs).
+    """
+    words = text.split()
+    if len(words) <= word_count:
+        return text.strip()
+    return " ".join(words[-word_count:]).strip()
 
 
 def chunk_text(
     text: str,
     chunk_size: int = 1200,
-    overlap: int = 150,
+    overlap_words: int = 40,
 ) -> List[Chunk]:
     """
     Build chunks close to chunk_size characters using paragraph boundaries.
-    Adds overlap (last N chars from previous chunk) to preserve context.
+    Adds overlap (last N words from previous chunk) to preserve context.
 
     chunk_size: target max characters per chunk
-    overlap: number of trailing characters from previous chunk to prepend to next
+    overlap_words: number of trailing words from previous chunk to prepend to next
     """
     if chunk_size <= 200:
         raise ValueError("chunk_size too small; use >= 200.")
-    if overlap < 0:
-        raise ValueError("overlap must be >= 0.")
-    if overlap >= chunk_size:
-        raise ValueError("overlap must be smaller than chunk_size.")
+    if overlap_words < 0:
+        raise ValueError("overlap_words must be >= 0.")
 
     paragraphs = _split_into_paragraphs(text)
 
     chunks: List[Chunk] = []
     current = ""
 
-    def _flush():
+    def flush():
         nonlocal current
-        if current.strip():
-            chunks.append(Chunk(id=len(chunks), text=current.strip(), char_len=len(current.strip())))
+        t = current.strip()
+        if t:
+            chunks.append(Chunk(id=len(chunks), text=t, char_len=len(t)))
         current = ""
 
     for p in paragraphs:
-        # If adding this paragraph would exceed size, flush current chunk
-        if current and (len(current) + 2 + len(p)) > chunk_size:
-            _flush()
-
-        # If a single paragraph is too large, hard-split it
+        # If a paragraph is too large, split it smartly first
         if len(p) > chunk_size:
-            # flush whatever we have
-            _flush()
-            start = 0
-            while start < len(p):
-                end = min(start + chunk_size, len(p))
-                part = p[start:end].strip()
+            flush()
+            for part in _smart_split_long_text(p, chunk_size):
                 if part:
                     chunks.append(Chunk(id=len(chunks), text=part, char_len=len(part)))
-                start = end
             continue
 
-        # Add paragraph
+        # If adding paragraph exceeds chunk_size, flush
+        if current and (len(current) + 2 + len(p)) > chunk_size:
+            flush()
+
         current = (current + "\n\n" + p) if current else p
 
-    _flush()
+    flush()
 
-    # Apply overlap
-    if overlap > 0 and len(chunks) > 1:
+    # Apply overlap (word-based)
+    if overlap_words > 0 and len(chunks) > 1:
         new_chunks: List[Chunk] = []
         prev_text = ""
+
         for c in chunks:
             if prev_text:
-                prefix = prev_text[-overlap:]
+                prefix = _tail_words(prev_text, overlap_words)
                 merged = (prefix + "\n" + c.text).strip()
                 new_chunks.append(Chunk(id=c.id, text=merged, char_len=len(merged)))
             else:
                 new_chunks.append(c)
             prev_text = c.text
+
         chunks = new_chunks
 
     return chunks
