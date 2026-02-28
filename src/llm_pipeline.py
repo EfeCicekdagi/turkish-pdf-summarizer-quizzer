@@ -39,47 +39,75 @@ class LLMService:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         device_idx = 0 if device == "cuda" else -1
 
-        # Summarizer pipeline (text2text-generation)
         self.summarizer = pipeline(
             task="text2text-generation",
             model=summarizer_model,
             device=device_idx,
         )
 
-        # Quiz generator pipeline (text2text-generation)
         self.quizzer = pipeline(
             task="text2text-generation",
             model=quiz_model,
             device=device_idx,
         )
 
-        # Handy tokenizers/models for safe truncation
         self._sum_tokenizer = self.summarizer.tokenizer
         self._sum_model = self.summarizer.model
 
         self._quiz_tokenizer = self.quizzer.tokenizer
         self._quiz_model = self.quizzer.model
 
-    def _truncate_to_model_limit(self, tokenizer, model, text: str, reserve_new_tokens: int) -> str:
-        """
-        Truncate INPUT to fit model max length, reserving room for output tokens.
-        Prevents silent overflow/truncation weirdness and hallucination spikes.
-        """
-        # Some models have huge or None max; keep a safe fallback
-        model_max = getattr(model.config, "max_position_embeddings", None)
-        if model_max is None:
-            model_max = getattr(tokenizer, "model_max_length", 512)
+    # ✅ BURASI __init__ DIŞINDA, class seviyesinde olmalı
+    @staticmethod
+    def _safe_model_max_length(tokenizer, model) -> int:
+        candidates = []
+        cfg = getattr(model, "config", None)
 
-        # Leave room for generated tokens + small buffer
-        max_input_tokens = max(32, int(model_max) - int(reserve_new_tokens) - 8)
+        for attr in ("max_position_embeddings", "n_positions", "max_length"):
+            v = getattr(cfg, attr, None)
+            if isinstance(v, int) and v > 0:
+                candidates.append(v)
+
+        tmax = getattr(tokenizer, "model_max_length", None)
+        if isinstance(tmax, int) and tmax > 0:
+            candidates.append(tmax)
+
+        max_len = min(candidates) if candidates else 512
+
+        # dev placeholder'ı clamp et
+        if max_len > 1_000_000:
+            max_len = 512
+
+        return int(max_len)
+
+    def _truncate_to_model_limit(self, tokenizer, model, text: str, reserve_new_tokens: int) -> str:
+        model_max = self._safe_model_max_length(tokenizer, model)
+        max_input_tokens = max(32, model_max - int(reserve_new_tokens) - 8)
 
         enc = tokenizer(
             text,
             truncation=True,
-            max_length=max_input_tokens,
+            max_length=int(max_input_tokens),
             return_tensors=None,
         )
-        # Decode back to string (clean, truncated)
+        return tokenizer.decode(enc["input_ids"], skip_special_tokens=True)
+
+    def _truncate_to_model_limit(self, tokenizer, model, text: str, reserve_new_tokens: int) -> str:
+        """
+        Truncate INPUT to fit model max length, reserving room for output tokens.
+        """
+        model_max = self._safe_model_max_length(tokenizer, model)
+
+        # Leave room for generated tokens + small buffer
+        max_input_tokens = max(32, model_max - int(reserve_new_tokens) - 8)
+
+        enc = tokenizer(
+            text,
+            truncation=True,
+            max_length=int(max_input_tokens),
+            return_tensors=None,
+        )
+
         return tokenizer.decode(enc["input_ids"], skip_special_tokens=True)
 
     def _generate(

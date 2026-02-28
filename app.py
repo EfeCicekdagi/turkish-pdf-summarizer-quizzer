@@ -85,7 +85,10 @@ with col_left:
     st.subheader("2) Chunking")
 
     if raw_text:
-        chunks = chunk_text(raw_text, chunk_size=int(chunk_size), overlap=int(overlap))
+        chunks = chunk_text(
+            raw_text,
+            chunk_size=int(chunk_size),
+            overlap_words=int(overlap),)
         st.write(f"Chunk sayısı: **{len(chunks)}**")
 
         if len(chunks) > 0:
