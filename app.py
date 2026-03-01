@@ -7,20 +7,20 @@ from src.chunking import chunk_text
 from src.llm_pipeline import LLMService
 
 # set_page_config MUST be the very first Streamlit call
-st.set_page_config(page_title="PDF Summarizer + Quiz (TR)", layout="wide")
+st.set_page_config(page_title="Turkish PDF Summarizer + Quiz", layout="wide")
 
 st.sidebar.write("CUDA available:", torch.cuda.is_available())
 if torch.cuda.is_available():
     st.sidebar.write("GPU:", torch.cuda.get_device_name(0))
 
-st.title("\U0001f4c4 T\u00fcrk\u00e7e PDF \u00d6zetleyici + Quiz \u00dcretici (Hugging Face)")
-st.caption("PDF y\u00fckle \u2192 chunk'lara b\u00f6l \u2192 \u00f6zetle \u2192 5 soru \u00fcret")
+st.title("\U0001f4c4 Turkish PDF Summarizer + Quiz Generator")
+st.caption("Upload a PDF \u2192 split into chunks \u2192 summarize \u2192 generate 5 questions")
 
 with st.sidebar:
-    st.header("Ayarlar")
+    st.header("Settings")
 
     summarizer_model = st.selectbox(
-        "\u00d6zet Modeli (TR)",
+        "Summarizer Model (TR)",
         options=[
             "mukayese/mt5-base-turkish-summarization",
             "ozcangundes/mt5-small-turkish-summarization",
@@ -29,7 +29,7 @@ with st.sidebar:
     )
 
     quiz_model = st.selectbox(
-        "Quiz Modeli",
+        "Quiz Model",
         options=[
             "google/flan-t5-base",
             "google/flan-t5-large",
@@ -37,36 +37,36 @@ with st.sidebar:
         index=0,
     )
 
-    max_pages = st.number_input("PDF i\u00e7in max sayfa (test i\u00e7in)", min_value=1, max_value=500, value=10, step=1)
+    max_pages = st.number_input("Max pages to extract (for testing)", min_value=1, max_value=500, value=10, step=1)
 
-    chunk_size = st.slider("Chunk boyutu (karakter)", min_value=600, max_value=2000, value=1200, step=100)
-    overlap = st.slider("Overlap (kelime say\u0131s\u0131)", min_value=0, max_value=80, value=30, step=5)
+    chunk_size = st.slider("Chunk size (characters)", min_value=600, max_value=2000, value=1200, step=100)
+    overlap = st.slider("Overlap (word count)", min_value=0, max_value=80, value=30, step=5)
 
-    use_first_n_chunks = st.number_input("H\u0131zl\u0131 demo: ilk N chunk ile \u00e7al\u0131\u015f", min_value=1, max_value=50, value=6, step=1)
+    use_first_n_chunks = st.number_input("Quick demo: use first N chunks", min_value=1, max_value=50, value=6, step=1)
 
     st.divider()
-    st.markdown("**\u00d6zet Y\u00f6ntemi**")
+    st.markdown("**Summary Method**")
     summary_mode_label = st.radio(
-        label="\u00d6zet Y\u00f6ntemi",
+        label="Summary Method",
         options=[
-            "\u00c7\u0131kar\u0131msal \u2014 g\u00fcvenilir, halusinasyon yok",
-            "\u00dcretimsel (mT5) \u2014 ak\u0131c\u0131 ama yan\u0131lt\u0131c\u0131 olabilir",
+            "Extractive \u2014 reliable, no hallucination",
+            "Abstractive (mT5) \u2014 fluent but may hallucinate",
         ],
         index=0,
         label_visibility="collapsed",
-        help="\u00c7\u0131kar\u0131msal: orijinal metinden c\u00fcmleler se\u00e7ilir.\n\u00dcretimsel: mT5 modeli yeni c\u00fcmle \u00fcretir.",
+        help="Extractive: selects sentences from the original text.\nAbstractive: mT5 generates new sentences.",
     )
-    summary_mode = "extractive" if summary_mode_label.startswith("\u00c7") else "abstractive"
+    summary_mode = "extractive" if summary_mode_label.startswith("E") else "abstractive"
 
     n_sentences = st.slider(
-        "Chunk ba\u015f\u0131na c\u00fcmle say\u0131s\u0131",
+        "Sentences per chunk",
         min_value=2, max_value=10, value=5, step=1,
         disabled=(summary_mode != "extractive"),
-        help="Sadece \u00c7\u0131kar\u0131msal modda ge\u00e7erlidir.",
+        help="Only used in Extractive mode.",
     )
 
     st.divider()
-    st.write("\u0130pucu: B\u00fcy\u00fck PDF'lerde `max_pages` ve `ilk N chunk` de\u011ferini k\u00fc\u00e7\u00fck tut.")
+    st.write("Tip: For large PDFs, keep `max pages` and `first N chunks` small.")
 
 
 @st.cache_resource
@@ -77,15 +77,14 @@ def get_llm(summarizer_model: str, quiz_model: str) -> LLMService:
 col_left, col_right = st.columns([1, 1], gap="large")
 
 with col_left:
-    st.subheader("1) PDF y\u00fckle veya metin yap\u0131\u015ftur")
+    st.subheader("1) Upload PDF or paste text")
 
-    uploaded = st.file_uploader("PDF y\u00fckle", type=["pdf"])
-    pasted_text = st.text_area("...veya buraya metin yap\u0131\u015ftur", height=220, placeholder="PDF yoksa buraya metin yap\u0131\u015ft\u0131rabilirsin.")
+    uploaded = st.file_uploader("Upload PDF", type=["pdf"])
+    pasted_text = st.text_area("...or paste text here", height=220, placeholder="If you don't have a PDF, you can paste text here.")
 
-    show_extracted_text = st.checkbox("\u00c7\u0131kar\u0131lan metni g\u00f6ster", value=False)
+    show_extracted_text = st.checkbox("Show extracted text", value=False)
 
     if uploaded is not None:
-        # Save uploaded file to a temp path for PyMuPDF
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(uploaded.read())
             tmp_path = tmp.name
@@ -93,15 +92,15 @@ with col_left:
         extract_res = extract_text_from_pdf(tmp_path, max_pages=int(max_pages))
         raw_text = extract_res.text
 
-        st.success(f"Metin \u00e7\u0131kar\u0131ld\u0131 \u2705  Sayfa: {extract_res.page_count} | Karakter: {extract_res.char_count}")
+        st.success(f"Text extracted \u2705  Pages: {extract_res.page_count} | Characters: {extract_res.char_count}")
 
         if show_extracted_text:
-            st.text_area("\u00c7\u0131kar\u0131lan metin (preview)", raw_text[:8000], height=250)
+            st.text_area("Extracted text (preview)", raw_text[:8000], height=250)
 
     else:
         raw_text = pasted_text.strip()
         if raw_text:
-            st.info(f"Yap\u0131\u015ft\u0131r\u0131lan metin al\u0131nd\u0131 \u2705  Karakter: {len(raw_text)}")
+            st.info(f"Pasted text received \u2705  Characters: {len(raw_text)}")
 
     st.divider()
     st.subheader("2) Chunking")
@@ -112,16 +111,16 @@ with col_left:
             chunk_size=int(chunk_size),
             overlap_words=int(overlap),
         )
-        st.write(f"Chunk say\u0131s\u0131: **{len(chunks)}**")
+        st.write(f"Number of chunks: **{len(chunks)}**")
 
         if len(chunks) > 0:
-            st.text_area("\u0130lk chunk preview", chunks[0].text[:2500], height=220)
+            st.text_area("First chunk preview", chunks[0].text[:2500], height=220)
     else:
         chunks = []
 
 
 with col_right:
-    st.subheader("3) \u00d6zet + Quiz \u00fcret")
+    st.subheader("3) Summarize + Generate Quiz")
 
     if "final_summary" not in st.session_state:
         st.session_state.final_summary = ""
@@ -138,18 +137,16 @@ with col_right:
 
     c1, c2 = st.columns([1, 1])
     with c1:
-        do_summarize = st.button("\U0001f9e0 \u00d6zetle", use_container_width=True, disabled=(not chunks))
+        do_summarize = st.button("\U0001f9e0 Summarize", use_container_width=True, disabled=(not chunks))
     with c2:
-        do_quiz = st.button("\U0001f4dd Quiz \u00dcret", use_container_width=True, disabled=(not st.session_state.final_summary))
+        do_quiz = st.button("\U0001f4dd Generate Quiz", use_container_width=True, disabled=(not st.session_state.final_summary))
 
-    # summarize_done flag: ozet tamamlandiktan sonra st.rerun() cagriliyor,
-    # bir sonraki render'da bu flag success mesajini gosterir.
     if st.session_state.summarize_done:
-        st.success("\u00d6zet haz\u0131r \u2705")
+        st.success("Summary ready \u2705")
         st.session_state.summarize_done = False
 
     if do_summarize:
-        with st.spinner("Chunk'lar \u00f6zetleniyor ve final \u00f6zet haz\u0131rlan\u0131yor..."):
+        with st.spinner("Summarizing chunks and building final summary..."):
             chunks_to_use = chunks[: int(use_first_n_chunks)]
             chunks_text = [c.text for c in chunks_to_use]
 
@@ -163,29 +160,26 @@ with col_right:
             st.session_state.quiz_text = ""
             st.session_state.summarize_done = True
 
-        # Rerun: quiz butonu disabled=(not final_summary) ile render edilmisti.
-        # Rerun ile sayfa yeniden ciziilir; artik final_summary dolu,
-        # quiz butonu aktif olur.
         st.rerun()
 
     if do_quiz:
-        st.session_state.quiz_seed += 1   # farklı seed → farklı sorular
-        with st.spinner("Quiz üretiliyor..."):
+        st.session_state.quiz_seed += 1
+        with st.spinner("Generating quiz..."):
             quiz_res = llm.generate_quiz(
                 st.session_state.final_summary,
                 n_questions=5,
                 seed=st.session_state.quiz_seed,
             )
             st.session_state.quiz_text = quiz_res.quiz_text
-        st.success("Quiz haz\u0131r \u2705")
+        st.success("Quiz ready \u2705")
 
     st.divider()
-    st.subheader("Final \u00d6zet")
+    st.subheader("Final Summary")
     st.text_area("final_summary", st.session_state.final_summary, height=260)
 
     if st.session_state.final_summary:
         st.download_button(
-            "\u2b07\ufe0f \u00d6zeti indir (txt)",
+            "\u2b07\ufe0f Download summary (txt)",
             data=st.session_state.final_summary.encode("utf-8"),
             file_name="summary_tr.txt",
             mime="text/plain",
@@ -198,15 +192,15 @@ with col_right:
 
     if st.session_state.quiz_text:
         st.download_button(
-            "\u2b07\ufe0f Quiz indir (txt)",
+            "\u2b07\ufe0f Download quiz (txt)",
             data=st.session_state.quiz_text.encode("utf-8"),
             file_name="quiz_tr.txt",
             mime="text/plain",
             use_container_width=True,
         )
 
-    with st.expander("Chunk \u00f6zetlerini g\u00f6ster (debug)"):
+    with st.expander("Show chunk summaries (debug)"):
         for i, cs in enumerate(st.session_state.chunk_summaries, start=1):
-            st.markdown(f"**Chunk \u00d6zet {i}**")
+            st.markdown(f"**Chunk Summary {i}**")
             st.write(cs)
             st.divider()
