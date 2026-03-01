@@ -208,11 +208,7 @@ class LLMService:
         if len(summaries) == 1:
             return summaries[0]
 
-        parts = []
-        for idx, s in enumerate(summaries, start=1):
-            parts.append(f"── Bölüm {idx} ──\n{s.strip()}")
-
-        return "\n\n".join(parts)
+        return "\n\n".join(s.strip() for s in summaries)
 
     # -----------------------------
     # Quiz generation
