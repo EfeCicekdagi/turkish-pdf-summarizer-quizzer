@@ -80,17 +80,6 @@ class LLMService:
 
         return int(max_len)
 
-    def _truncate_to_model_limit(self, tokenizer, model, text: str, reserve_new_tokens: int) -> str:
-        model_max = self._safe_model_max_length(tokenizer, model)
-        max_input_tokens = max(32, model_max - int(reserve_new_tokens) - 8)
-
-        enc = tokenizer(
-            text,
-            truncation=True,
-            max_length=int(max_input_tokens),
-            return_tensors=None,
-        )
-        return tokenizer.decode(enc["input_ids"], skip_special_tokens=True)
 
     def _truncate_to_model_limit(self, tokenizer, model, text: str, reserve_new_tokens: int) -> str:
         """

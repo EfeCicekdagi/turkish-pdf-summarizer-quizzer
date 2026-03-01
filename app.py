@@ -6,11 +6,12 @@ from src.pdf_utils import extract_text_from_pdf
 from src.chunking import chunk_text
 from src.llm_pipeline import LLMService
 
+# set_page_config MUST be the very first Streamlit call
+st.set_page_config(page_title="PDF Summarizer + Quiz (TR)", layout="wide")
+
 st.sidebar.write("CUDA available:", torch.cuda.is_available())
 if torch.cuda.is_available():
     st.sidebar.write("GPU:", torch.cuda.get_device_name(0))
-
-st.set_page_config(page_title="PDF Summarizer + Quiz (TR)", layout="wide")
 
 st.title("📄 Türkçe PDF Özetleyici + Quiz Üretici (Hugging Face)")
 st.caption("PDF yükle → chunk’lara böl → özetle → 5 soru üret")
@@ -39,7 +40,7 @@ with st.sidebar:
     max_pages = st.number_input("PDF için max sayfa (test için)", min_value=1, max_value=500, value=10, step=1)
 
     chunk_size = st.slider("Chunk boyutu (karakter)", min_value=600, max_value=2000, value=1200, step=100)
-    overlap = st.slider("Overlap (karakter)", min_value=0, max_value=400, value=150, step=50)
+    overlap = st.slider("Overlap (kelime sayısı)", min_value=0, max_value=80, value=30, step=5)
 
     use_first_n_chunks = st.number_input("Hızlı demo: ilk N chunk ile çalış", min_value=1, max_value=50, value=6, step=1)
 
