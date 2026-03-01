@@ -107,6 +107,8 @@ with col_right:
         st.session_state.quiz_text = ""
     if "chunk_summaries" not in st.session_state:
         st.session_state.chunk_summaries = []
+    if "summarize_done" not in st.session_state:
+        st.session_state.summarize_done = False
 
     llm = get_llm(summarizer_model, quiz_model)
 
@@ -116,7 +118,10 @@ with col_right:
     with c2:
         do_quiz = st.button("📝 Quiz Üret", use_container_width=True, disabled=(not st.session_state.final_summary))
 
-    if do_summarize:
+    if st.session_state.get("summarize_done"):
+        st.success("Özet hazır ✅")
+        st.session_state.summarize_done = False
+
         with st.spinner("Chunk’lar özetleniyor ve final özet hazırlanıyor..."):
             chunks_to_use = chunks[: int(use_first_n_chunks)]
             chunks_text = [c.text for c in chunks_to_use]
