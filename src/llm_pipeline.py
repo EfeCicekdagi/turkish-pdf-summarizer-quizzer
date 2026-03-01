@@ -170,52 +170,30 @@ class LLMService:
             chunk_summaries.append(s)
 
         # REDUCE: hierarchical reduce to avoid oversized input
-        final_summary = self._hierarchical_reduce_summaries(chunk_summaries)
+        final_summary = self._combine_summaries(chunk_summaries)
 
         return SummarizeResult(chunk_summaries=chunk_summaries, final_summary=final_summary)
 
-    def _hierarchical_reduce_summaries(self, summaries: List[str]) -> str:
+    def _combine_summaries(self, summaries: List[str]) -> str:
         """
-        Reduce in stages: (N summaries) -> grouped -> fewer summaries -> final.
-        This prevents a giant combined prompt from exceeding model input limits.
+        mT5-base has only 512 tokens max. With ~260 reserved for generation,
+        barely ONE chunk summary fits in the input window — everything after
+        chunk 1 is silently truncated by _truncate_to_model_limit.
+
+        Root fix: do NOT re-feed combined summaries into mT5 for REDUCE.
+        Instead, build the final summary by concatenating all chunk summaries
+        with clear section headers. This is accurate, fast, and scalable.
         """
         if not summaries:
             return ""
+        if len(summaries) == 1:
+            return summaries[0]
 
-        current = summaries[:]
-        stage = 1
+        parts = []
+        for idx, s in enumerate(summaries, start=1):
+            parts.append(f"── Bölüm {idx} ──\n{s.strip()}")
 
-        # Group size heuristic:
-        # - if many chunks, group 3 at a time; otherwise group 2
-        while len(current) > 1:
-            group_size = 3 if len(current) >= 6 else 2
-            next_level: List[str] = []
-
-            for i in range(0, len(current), group_size):
-                group = current[i : i + group_size]
-                combined = "\n\n".join([f"[Özet {i+j+1}]\n{txt}" for j, txt in enumerate(group)])
-
-                # Summarize the combined summaries
-                reduced = self._generate(
-                    gen_pipe=self.summarizer,
-                    tokenizer=self._sum_tokenizer,
-                    model=self._sum_model,
-                    prompt=combined,          # still raw-ish content; no instruction
-                    max_new_tokens=260 if len(current) > group_size else 320,
-                    temperature=0.0,
-                    deterministic=True,
-                    anti_repeat=True,
-                )
-                next_level.append(reduced)
-
-            current = next_level
-            stage += 1
-
-            # Safety: avoid infinite loops (shouldn't happen)
-            if stage > 10:
-                break
-
-        return current[0]
+        return "\n\n".join(parts)
 
     # -----------------------------
     # Quiz generation
