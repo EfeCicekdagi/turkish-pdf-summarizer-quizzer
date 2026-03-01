@@ -213,7 +213,7 @@ class LLMService:
     # -----------------------------
     # Quiz generation
     # -----------------------------
-    def generate_quiz(self, final_summary: str, n_questions: int = 5) -> QuizResult:
+    def generate_quiz(self, final_summary: str, n_questions: int = 5, seed: int = 0) -> QuizResult:
         """
         Generate a Turkish quiz from the final summary.
 
@@ -221,6 +221,7 @@ class LLMService:
         - Always produces Turkish output
         - Never hallucinates (answers exist in the source text)
         - Works without FLAN-T5 (which only understands English)
+        - seed: pass a different value each call to get different questions
         """
-        quiz_text = _template_quiz(final_summary, n_questions=n_questions)
+        quiz_text = _template_quiz(final_summary, n_questions=n_questions, seed=seed)
         return QuizResult(quiz_text=quiz_text)

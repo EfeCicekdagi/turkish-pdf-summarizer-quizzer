@@ -131,6 +131,8 @@ with col_right:
         st.session_state.chunk_summaries = []
     if "summarize_done" not in st.session_state:
         st.session_state.summarize_done = False
+    if "quiz_seed" not in st.session_state:
+        st.session_state.quiz_seed = 0
 
     llm = get_llm(summarizer_model, quiz_model)
 
@@ -167,8 +169,13 @@ with col_right:
         st.rerun()
 
     if do_quiz:
-        with st.spinner("Quiz \u00fcretiliyor..."):
-            quiz_res = llm.generate_quiz(st.session_state.final_summary, n_questions=5)
+        st.session_state.quiz_seed += 1   # farklı seed → farklı sorular
+        with st.spinner("Quiz üretiliyor..."):
+            quiz_res = llm.generate_quiz(
+                st.session_state.final_summary,
+                n_questions=5,
+                seed=st.session_state.quiz_seed,
+            )
             st.session_state.quiz_text = quiz_res.quiz_text
         st.success("Quiz haz\u0131r \u2705")
 
