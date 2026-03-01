@@ -45,6 +45,27 @@ with st.sidebar:
     use_first_n_chunks = st.number_input("H\u0131zl\u0131 demo: ilk N chunk ile \u00e7al\u0131\u015f", min_value=1, max_value=50, value=6, step=1)
 
     st.divider()
+    st.markdown("**\u00d6zet Y\u00f6ntemi**")
+    summary_mode_label = st.radio(
+        label="\u00d6zet Y\u00f6ntemi",
+        options=[
+            "\u00c7\u0131kar\u0131msal \u2014 g\u00fcvenilir, halusinasyon yok",
+            "\u00dcretimsel (mT5) \u2014 ak\u0131c\u0131 ama yan\u0131lt\u0131c\u0131 olabilir",
+        ],
+        index=0,
+        label_visibility="collapsed",
+        help="\u00c7\u0131kar\u0131msal: orijinal metinden c\u00fcmleler se\u00e7ilir.\n\u00dcretimsel: mT5 modeli yeni c\u00fcmle \u00fcretir.",
+    )
+    summary_mode = "extractive" if summary_mode_label.startswith("\u00c7") else "abstractive"
+
+    n_sentences = st.slider(
+        "Chunk ba\u015f\u0131na c\u00fcmle say\u0131s\u0131",
+        min_value=2, max_value=10, value=5, step=1,
+        disabled=(summary_mode != "extractive"),
+        help="Sadece \u00c7\u0131kar\u0131msal modda ge\u00e7erlidir.",
+    )
+
+    st.divider()
     st.write("\u0130pucu: B\u00fcy\u00fck PDF'lerde `max_pages` ve `ilk N chunk` de\u011ferini k\u00fc\u00e7\u00fck tut.")
 
 
@@ -130,7 +151,11 @@ with col_right:
             chunks_to_use = chunks[: int(use_first_n_chunks)]
             chunks_text = [c.text for c in chunks_to_use]
 
-            sum_res = llm.summarize_chunks(chunks_text)
+            sum_res = llm.summarize_chunks(
+                chunks_text,
+                mode=summary_mode,
+                n_sentences_per_chunk=int(n_sentences),
+            )
             st.session_state.chunk_summaries = sum_res.chunk_summaries
             st.session_state.final_summary = sum_res.final_summary
             st.session_state.quiz_text = ""

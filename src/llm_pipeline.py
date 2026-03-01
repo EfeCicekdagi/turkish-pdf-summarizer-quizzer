@@ -9,6 +9,7 @@ import torch
 
 from src.prompts import build_quiz_prompt
 from src.postprocess import normalize_output
+from src.extractive import extractive_summary
 
 
 @dataclass
@@ -149,27 +150,44 @@ class LLMService:
         return normalize_output(text)
 
     # -----------------------------
-    # Summarization (MAP + hierarchical REDUCE)
+    # Summarization
     # -----------------------------
-    def summarize_chunks(self, chunks: List[str]) -> SummarizeResult:
+    def summarize_chunks(
+        self,
+        chunks: List[str],
+        mode: str = "extractive",
+        n_sentences_per_chunk: int = 5,
+    ) -> SummarizeResult:
+        """
+        Summarize each chunk, then combine.
+
+        mode:
+          "extractive"  — TF-IDF sentence extraction (faithful, zero hallucination)
+          "abstractive" — mT5 generation (fluent but may hallucinate)
+        """
         chunk_summaries: List[str] = []
 
-        # MAP: each chunk summarized with Turkish summarizer
-        # IMPORTANT: For this fine-tuned summarizer, feed RAW text (not an instruction prompt).
-        for ch in chunks:
-            s = self._generate(
-                gen_pipe=self.summarizer,
-                tokenizer=self._sum_tokenizer,
-                model=self._sum_model,
-                prompt=ch,                 # <-- changed: raw chunk
-                max_new_tokens=220,
-                temperature=0.0,
-                deterministic=True,
-                anti_repeat=True,
-            )
-            chunk_summaries.append(s)
+        if mode == "extractive":
+            # MAP: pick most important sentences from each chunk
+            for ch in chunks:
+                s = extractive_summary(ch, n_sentences=n_sentences_per_chunk)
+                chunk_summaries.append(s)
+        else:
+            # MAP: abstractive summarization with mT5
+            for ch in chunks:
+                s = self._generate(
+                    gen_pipe=self.summarizer,
+                    tokenizer=self._sum_tokenizer,
+                    model=self._sum_model,
+                    prompt=ch,
+                    max_new_tokens=220,
+                    temperature=0.0,
+                    deterministic=True,
+                    anti_repeat=True,
+                )
+                chunk_summaries.append(s)
 
-        # REDUCE: hierarchical reduce to avoid oversized input
+        # REDUCE: combine all chunk summaries with section labels
         final_summary = self._combine_summaries(chunk_summaries)
 
         return SummarizeResult(chunk_summaries=chunk_summaries, final_summary=final_summary)
