@@ -10,6 +10,7 @@ import torch
 from src.prompts import build_quiz_prompt
 from src.postprocess import normalize_output
 from src.extractive import extractive_summary
+from src.quiz_generator import generate_quiz as _template_quiz
 
 
 @dataclass
@@ -217,16 +218,13 @@ class LLMService:
     # Quiz generation
     # -----------------------------
     def generate_quiz(self, final_summary: str, n_questions: int = 5) -> QuizResult:
-        prompt = build_quiz_prompt(final_summary, n_questions=n_questions)
+        """
+        Generate a Turkish quiz from the final summary.
 
-        quiz_text = self._generate(
-            gen_pipe=self.quizzer,
-            tokenizer=self._quiz_tokenizer,
-            model=self._quiz_model,
-            prompt=prompt,
-            max_new_tokens=420,
-            temperature=0.4,
-            deterministic=False,   # quizde çeşitlilik iyi
-            anti_repeat=True,
-        )
+        Uses the template-based generator (no LLM) which:
+        - Always produces Turkish output
+        - Never hallucinates (answers exist in the source text)
+        - Works without FLAN-T5 (which only understands English)
+        """
+        quiz_text = _template_quiz(final_summary, n_questions=n_questions)
         return QuizResult(quiz_text=quiz_text)
