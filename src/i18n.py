@@ -28,6 +28,7 @@ T: dict[str, dict[str, str]] = {
         "extractive_help":   "Çıkarımsal: orijinal metinden cümleler seçilir.\nÜretimsel: mT5 yeni cümle üretir.",
         "sentences_per_chunk": "Chunk başına cümle sayısı",
         "sentences_help":    "Sadece Çıkarımsal modda geçerlidir.",
+        "n_questions":       "Soru sayısı",
         "tip":               "İpucu: Büyük PDF'lerde `max sayfa` ve `ilk N chunk` değerini küçük tut.",
         # left column
         "step1":             "1) PDF yükle veya metin yapıştır",
@@ -77,6 +78,7 @@ T: dict[str, dict[str, str]] = {
         "extractive_help":   "Extractive: selects sentences from original text.\nAbstractive: mT5 generates new sentences.",
         "sentences_per_chunk": "Sentences per chunk",
         "sentences_help":    "Only used in Extractive mode.",
+        "n_questions":       "Number of questions",
         "tip":               "Tip: For large PDFs, keep `max pages` and `first N chunks` small.",
         # left column
         "step1":             "1) Upload PDF or paste text",

@@ -78,6 +78,11 @@ with st.sidebar:
         help=t["sentences_help"],
     )
 
+    n_questions = st.slider(
+        t["n_questions"],
+        min_value=3, max_value=15, value=5, step=1,
+    )
+
     st.divider()
     st.write(t["tip"])
 
@@ -180,7 +185,7 @@ with col_right:
         with st.spinner(t["spinner_quiz"]):
             quiz_res = llm.generate_quiz(
                 st.session_state.final_summary,
-                n_questions=5,
+                n_questions=int(n_questions),
                 seed=st.session_state.quiz_seed,
             )
             st.session_state.quiz_text = quiz_res.quiz_text
