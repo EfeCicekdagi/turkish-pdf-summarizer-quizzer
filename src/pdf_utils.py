@@ -1,18 +1,28 @@
 # src/pdf_utils.py
+"""
+pdf_utils.py - PDF Text Extraction
+====================================
+Extracts plain text from PDF files using PyMuPDF (fitz).
+
+Features:
+    - max_pages parameter processes only the first N pages (useful for quick testing)
+    - Extracted text is normalized to remove redundant whitespace
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
 import re
 from typing import Optional
 
-import fitz  # PyMuPDF
+import fitz  # PyMuPDF — install with: pip install pymupdf
 
 
 @dataclass
 class PDFExtractResult:
-    text: str
-    page_count: int
-    char_count: int
+    """Container for the result of a PDF extraction."""
+    text: str        # Full extracted and cleaned plain text
+    page_count: int  # Total number of pages in the PDF
+    char_count: int  # Character count of the extracted text
 
 
 def clean_text(text: str) -> str:

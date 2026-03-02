@@ -1,4 +1,27 @@
 # src/llm_pipeline.py
+"""
+llm_pipeline.py - Two-Model LLM Service
+=========================================
+Manages two separate Hugging Face models:
+
+    1. summarizer (mT5)
+       A seq2seq model fine-tuned for Turkish summarization.
+       In Abstractive mode it generates new sentences for each chunk.
+
+    2. quizzer (FLAN-T5)
+       An instruction-tuned model that performs well in English.
+       NOTE: Quiz generation currently uses the template-based generator
+       (quiz_generator.py) because FLAN-T5 does not understand Turkish well.
+
+Summarization pipeline (MAP-REDUCE):
+    MAP    -> Each chunk is summarized independently
+    REDUCE -> Chunk summaries are concatenated (NOT re-fed into mT5)
+
+Why not use mT5 for REDUCE?
+    mT5-base accepts only 512 tokens of input. When multiple chunk summaries
+    are combined the limit is silently exceeded. Direct concatenation is more
+    reliable, transparent, and scalable.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,4 +1,16 @@
 # src/chunking.py
+"""
+chunking.py - Text Chunking
+============================
+Splits large texts into overlapping segments so they fit within
+the limited context windows (token limits) of LLMs.
+
+Approach:
+    1. Split text at paragraph boundaries
+    2. Start a new chunk when the target chunk_size is reached
+    3. Prepend the last overlap_words words of the previous chunk
+       to the next one to preserve context continuity
+"""
 from __future__ import annotations
 
 import re
@@ -8,9 +20,10 @@ from typing import List
 
 @dataclass
 class Chunk:
-    id: int
-    text: str
-    char_len: int
+    """Represents a single text segment."""
+    id: int       # Zero-based chunk index
+    text: str     # Chunk content (includes leading overlap from previous chunk)
+    char_len: int # Character length of this chunk
 
 
 _WS_RE = re.compile(r"[ \t]+")

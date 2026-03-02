@@ -1,4 +1,21 @@
 # src/extractive.py
+"""
+extractive.py - TF-IDF Extractive Summarizer
+==============================================
+Zero-hallucination summarization: always selects sentences from the
+original text, never generates new ones.
+
+Algorithm:
+    1. Split text into individual sentences
+    2. Score each sentence with TF-IDF
+       (sentences that use rare/important words frequently score higher)
+    3. Return the top-N sentences in their original reading order
+
+Advantages:
+    - No model loading required -> instant results
+    - Output sentences come verbatim from the source text
+    - Statistically driven -> language-agnostic (works for Turkish without stop-words)
+"""
 from __future__ import annotations
 
 import re
