@@ -158,6 +158,7 @@ class LLMService:
         chunks: List[str],
         mode: str = "extractive",
         n_sentences_per_chunk: int = 5,
+        on_chunk_done=None,
     ) -> SummarizeResult:
         """
         Summarize each chunk, then combine.
@@ -165,17 +166,24 @@ class LLMService:
         mode:
           "extractive"  — TF-IDF sentence extraction (faithful, zero hallucination)
           "abstractive" — mT5 generation (fluent but may hallucinate)
+
+        on_chunk_done: optional callable(completed: int, total: int)
+          Called after each chunk is processed so the caller can update a
+          progress bar. Example: on_chunk_done=lambda d, t: bar.progress(d/t)
         """
         chunk_summaries: List[str] = []
+        total = len(chunks)
 
         if mode == "extractive":
             # MAP: pick most important sentences from each chunk
-            for ch in chunks:
+            for i, ch in enumerate(chunks):
                 s = extractive_summary(ch, n_sentences=n_sentences_per_chunk)
                 chunk_summaries.append(s)
+                if on_chunk_done:
+                    on_chunk_done(i + 1, total)
         else:
             # MAP: abstractive summarization with mT5
-            for ch in chunks:
+            for i, ch in enumerate(chunks):
                 s = self._generate(
                     gen_pipe=self.summarizer,
                     tokenizer=self._sum_tokenizer,
@@ -187,6 +195,8 @@ class LLMService:
                     anti_repeat=True,
                 )
                 chunk_summaries.append(s)
+                if on_chunk_done:
+                    on_chunk_done(i + 1, total)
 
         # REDUCE: combine all chunk summaries with section labels
         final_summary = self._combine_summaries(chunk_summaries)

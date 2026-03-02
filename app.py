@@ -175,19 +175,34 @@ with col_right:
         st.session_state.summarize_done = False
 
     if do_summarize:
-        with st.spinner(t["spinner_summarize"]):
-            chunks_to_use = chunks[: int(use_first_n_chunks)]
-            chunks_text = [c.text for c in chunks_to_use]
+        chunks_to_use = chunks[: int(use_first_n_chunks)]
+        chunks_text = [c.text for c in chunks_to_use]
+        total_chunks = len(chunks_text)
 
-            sum_res = llm.summarize_chunks(
-                chunks_text,
-                mode=summary_mode,
-                n_sentences_per_chunk=int(n_sentences),
-            )
-            st.session_state.chunk_summaries = sum_res.chunk_summaries
-            st.session_state.final_summary = sum_res.final_summary
-            st.session_state.quiz_text = ""
-            st.session_state.summarize_done = True
+        progress_bar = st.progress(0, text=t["spinner_summarize"])
+        status_text = st.empty()
+
+        def _on_chunk_done(done: int, total: int) -> None:
+            pct = done / total
+            label = t["progress_chunk"].format(done=done, total=total)
+            progress_bar.progress(pct, text=label)
+            status_text.caption(label)
+
+        sum_res = llm.summarize_chunks(
+            chunks_text,
+            mode=summary_mode,
+            n_sentences_per_chunk=int(n_sentences),
+            on_chunk_done=_on_chunk_done,
+        )
+
+        # Show 100 % briefly before rerun clears the bar
+        progress_bar.progress(1.0, text=t["summary_ready"])
+        status_text.empty()
+
+        st.session_state.chunk_summaries = sum_res.chunk_summaries
+        st.session_state.final_summary = sum_res.final_summary
+        st.session_state.quiz_text = ""
+        st.session_state.summarize_done = True
 
         st.rerun()
 
