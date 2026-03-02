@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "turkish-pdf-summarizer-quizzer"
+version = "0.1.0"
+description = "Streamlit app that summarizes Turkish PDFs and generates quiz questions."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+
+dependencies = [
+    # Web UI
+    "streamlit>=1.35.0",
+
+    # Deep learning backend — CPU version.
+    # For GPU (CUDA) support, install PyTorch manually from https://pytorch.org/get-started/locally/
+    # and remove this line.
+    "torch>=2.2.0",
+
+    # Hugging Face model pipeline (mT5, FLAN-T5)
+    "transformers>=4.40.0",
+
+    # Required by the mT5 tokenizer — must be installed alongside transformers
+    "sentencepiece>=0.2.0",
+
+    # Recommended by transformers for device_map and half-precision model loading
+    "accelerate>=0.30.0",
+
+    # PDF text extraction
+    "pymupdf>=1.24.0",   # imported as `fitz`
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",        # fast linter + formatter
+    "mypy>=1.9",        # static type checking
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]   # pycodestyle errors, pyflakes, isort
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true    # third-party stubs not always available

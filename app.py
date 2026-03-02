@@ -256,6 +256,13 @@ with col_right:
         chunks_text = [c.text for c in chunks_to_use]
         total_chunks = len(chunks_text)
 
+        # Safety guard: chunks should always exist when the button is enabled,
+        # but if somehow text was provided yet produced no chunks (e.g. all
+        # whitespace), show a clear warning instead of crashing.
+        if not chunks_text:
+            st.warning(t.get("no_chunks_warning", "No text chunks to summarize. Please upload a PDF or paste some text."))
+            st.stop()
+
         # Live chunk-by-chunk progress bar with a status label
         progress_bar = st.progress(0, text=t["spinner_summarize"])
         status_text = st.empty()

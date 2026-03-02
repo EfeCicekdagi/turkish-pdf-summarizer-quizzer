@@ -58,6 +58,7 @@ T: dict[str, dict[str, str]] = {
         "chunk_debug":       "Chunk özetlerini göster (debug)",
         "chunk_debug_item":  "**Chunk Özet {i}**",
         "pdf_error":         "PDF okunamadı",
+        "no_chunks_warning": "Chunk bulunamadı. Lütfen bir PDF yükleyin veya metin yapıştırın.",
         # language selector
         "lang_label":        "Dil / Language",
     },
@@ -110,6 +111,7 @@ T: dict[str, dict[str, str]] = {
         "chunk_debug":       "Show chunk summaries (debug)",
         "chunk_debug_item":  "**Chunk Summary {i}**",
         "pdf_error":         "Could not read PDF",
+        "no_chunks_warning": "No text chunks to summarize. Please upload a PDF or paste some text.",
         # language selector
         "lang_label":        "Dil / Language",
     },
