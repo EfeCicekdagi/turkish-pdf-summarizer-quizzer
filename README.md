@@ -100,6 +100,11 @@ A **Streamlit** web application that automatically summarizes Turkish PDF files 
 > All models are licensed under Apache License 2.0. 
 > This repository does not redistribute model weights.
 
+### Third-Party Notice
+
+This project uses external models from HuggingFace under the Apache License 2.0.
+Model weights are downloaded at runtime and are not included in this repository.
+
 ### Installation
 
 ```bash
@@ -161,11 +166,6 @@ turkish-pdf-summarizer-quizzer/
 | `sentencepiece` | mT5 tokenizer — required by `transformers` |
 | `accelerate` | Device mapping & half-precision model loading |
 | `pymupdf` | PDF text extraction (`import fitz`) |
-
-### Third-Party Notice
-
-This project uses external models from HuggingFace under the Apache License 2.0.
-Model weights are downloaded at runtime and are not included in this repository.
 
 ## 📄 License
 
