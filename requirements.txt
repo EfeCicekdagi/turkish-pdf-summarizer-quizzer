@@ -1,4 +1,15 @@
-streamlit
-transformers
-torch
-pymupdf
+# ── Web UI ────────────────────────────────────────────────────────────────────
+streamlit>=1.35.0
+
+# ── Deep Learning ─────────────────────────────────────────────────────────────
+# CPU-only PyTorch (küçük boyut). GPU kullanmak için aşağıdaki satırı silin ve
+# https://pytorch.org/get-started/locally/ adresinden CUDA sürümünü kurun.
+torch>=2.2.0
+
+# ── NLP / Model Pipeline ──────────────────────────────────────────────────────
+transformers>=4.40.0
+sentencepiece>=0.2.0        # mT5 tokenizer için zorunlu
+accelerate>=0.30.0          # device_map ve yarı-hassas model yüklemesi
+
+# ── PDF İşleme ────────────────────────────────────────────────────────────────
+pymupdf>=1.24.0             # import adı: fitz
