@@ -25,12 +25,14 @@ Bu uygulama, Türkçe PDF dosyalarını (ya da yapıştırılan metinleri) otoma
 
 ### Kullanılan Modeller
 
-| Görev | Model |
-|-------|-------|
-| Türkçe özetleme | `mukayese/mt5-base-turkish-summarization` *(varsayılan)* |
-| Türkçe özetleme (küçük) | `ozcangundes/mt5-small-turkish-summarization` |
-| Quiz modeli | `google/flan-t5-base` *(varsayılan)* |
-| Quiz modeli (büyük) | `google/flan-t5-large` |
+| Görev | Model | Lisans |
+|-------|-------|--------|
+| Türkçe özetleme | `mukayese/mt5-base-turkish-summarization` *(varsayılan)* | Apache 2.0 |
+| Türkçe özetleme (küçük) | `ozcangundes/mt5-small-turkish-summarization` | Apache 2.0 |
+| Quiz modeli | `google/flan-t5-base` *(varsayılan)* | Apache 2.0 |
+| Quiz modeli (büyük) | `google/flan-t5-large` | Apache 2.0 |
+
+> Tüm modeller **Apache 2.0** lisansı ile yayımlanmıştır. Ticari kullanım, değiştirme ve dağıtım serbesttir; telif hakkı bildirimini korumak yeterlidir.
 
 ### Kurulum
 
@@ -84,6 +86,17 @@ A **Streamlit** web application that automatically summarizes Turkish PDF files 
 - 📝 **Quiz generator** — creates Q&A pairs automatically from the summary (no LLM required)
 - 🌐 **Bilingual UI** — Turkish and English interface
 - ⬇️ **Download summary & quiz** — as `.txt` files
+
+### Models Used
+
+| Task | Model | License |
+|------|-------|---------| 
+| Turkish summarization | `mukayese/mt5-base-turkish-summarization` *(default)* | Apache 2.0 |
+| Turkish summarization (small) | `ozcangundes/mt5-small-turkish-summarization` | Apache 2.0 |
+| Quiz model | `google/flan-t5-base` *(default)* | Apache 2.0 |
+| Quiz model (large) | `google/flan-t5-large` | Apache 2.0 |
+
+> All models are released under the **Apache 2.0** license — free for commercial use, modification, and distribution. Just preserve the copyright notice.
 
 ### Installation
 
