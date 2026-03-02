@@ -3,6 +3,8 @@
 > **Türkçe PDF belgelerini özetle ve quiz üret — yerel modeller, internet bağlantısı gerekmez.**  
 > Summarize Turkish PDF documents and generate quizzes — local models, no internet required.
 
+![Uygulama Ekran Görüntüsü](examples/app_screenshot.png)
+
 ---
 
 ## 🇹🇷 Türkçe
@@ -138,7 +140,27 @@ streamlit run app.py
 
 ---
 
-## 🗂️ Project Structure
+## 🧪 Örnek Çıktılar
+
+`examples/` klasörü, uygulamanin ne üreteceğine dair hazır örnekler içerir:
+
+| Dosya | Açıklama |
+|-------|---------|
+| [sample\_input.txt](examples/sample_input.txt) | Osmanlı İmparatorluğu hakkında örnek Türkçe metin |
+| [sample\_summary.txt](examples/sample_summary.txt) | Extractive mod ile üretilen özet |
+| [sample\_quiz.txt](examples/sample_quiz.txt) | 5 sorulu örnek quiz (kısa cevap + çoktan seçmeli + doğru/yanlış) |
+
+## 🧪 Examples
+
+The `examples/` folder contains ready-made outputs showing what the app produces:
+
+| File | Description |
+|------|-------------|
+| [sample\_input.txt](examples/sample_input.txt) | Sample Turkish text about the Ottoman Empire |
+| [sample\_summary.txt](examples/sample_summary.txt) | Extractive summary output |
+| [sample\_quiz.txt](examples/sample_quiz.txt) | 5-question quiz (fill-in-the-blank + multiple choice + true/false) |
+
+## 🗂️ Proje Yapısı / Project Structure
 
 ```
 turkish-pdf-summarizer-quizzer/
