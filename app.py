@@ -1,3 +1,4 @@
+import os
 import tempfile
 import torch
 import streamlit as st
@@ -103,17 +104,27 @@ with col_left:
     show_extracted_text = st.checkbox(t["show_text"], value=False)
 
     if uploaded is not None:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            tmp.write(uploaded.read())
-            tmp_path = tmp.name
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(uploaded.read())
+                tmp_path = tmp.name
 
-        extract_res = extract_text_from_pdf(tmp_path, max_pages=int(max_pages))
-        raw_text = extract_res.text
+            extract_res = extract_text_from_pdf(tmp_path, max_pages=int(max_pages))
+            raw_text = extract_res.text
 
-        st.success(t["extracted_ok"].format(pages=extract_res.page_count, chars=extract_res.char_count))
+            st.success(t["extracted_ok"].format(pages=extract_res.page_count, chars=extract_res.char_count))
 
-        if show_extracted_text:
-            st.text_area(t["extracted_preview"], raw_text[:8000], height=250)
+            if show_extracted_text:
+                st.text_area(t["extracted_preview"], raw_text[:8000], height=250)
+
+        except Exception as exc:
+            st.error(f"{t.get('pdf_error', 'PDF okunamadı')}: {exc}")
+            raw_text = ""
+
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
     else:
         raw_text = pasted_text.strip()

@@ -56,6 +56,7 @@ T: dict[str, dict[str, str]] = {
         "download_quiz":     "⬇️ Quiz indir (txt)",
         "chunk_debug":       "Chunk özetlerini göster (debug)",
         "chunk_debug_item":  "**Chunk Özet {i}**",
+        "pdf_error":         "PDF okunamadı",
         # language selector
         "lang_label":        "Dil / Language",
     },
@@ -106,6 +107,7 @@ T: dict[str, dict[str, str]] = {
         "download_quiz":     "⬇️ Download quiz (txt)",
         "chunk_debug":       "Show chunk summaries (debug)",
         "chunk_debug_item":  "**Chunk Summary {i}**",
+        "pdf_error":         "Could not read PDF",
         # language selector
         "lang_label":        "Dil / Language",
     },
