@@ -18,7 +18,8 @@ Bu uygulama, Türkçe PDF dosyalarını (ya da yapıştırılan metinleri) otoma
 - 🧠 **İki özet modu:**
   - **Çıkarımsal (Extractive):** TF-IDF ile orijinal cümleleri seçer — hızlı, güvenilir, sıfır halüsinasyon
   - **Üretimsel (Abstractive):** mT5 ile yeni cümleler üretir — akıcı ama yavaş
-- 📝 **Quiz üretici** — özetten otomatik soru-cevap çifti oluşturur
+- 📊 **Chunk bazlı ilerleme çubuğu** — her chunk özetlendikçe gerçek zamanlı güncellenir
+- 📝 **Quiz üretici** — özetten otomatik soru-cevap çifti oluşturur (LLM gerektirmez)
 - 🌐 **İki dil desteği** — Türkçe ve İngilizce arayüz
 - ⬇️ **Özet ve quiz indirme** — `.txt` dosyası olarak
 
@@ -43,8 +44,11 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 # source .venv/bin/activate  # Mac/Linux
 
-# 3. Bağımlılıkları yükle
-pip install -r requirements.txt
+# 3. Bağımlılıkları yükle (pyproject.toml ile — önerilen yöntem)
+pip install -e .
+
+# Alternatif: eski requirements.txt ile
+# pip install -r requirements.txt
 
 # 4. Uygulamayı çalıştır
 streamlit run app.py
@@ -76,7 +80,8 @@ A **Streamlit** web application that automatically summarizes Turkish PDF files 
 - 🧠 **Two summarization modes:**
   - **Extractive:** picks original sentences via TF-IDF — fast, reliable, zero hallucination
   - **Abstractive:** generates new sentences with mT5 — fluent but slower
-- 📝 **Quiz generator** — creates Q&A pairs automatically from the summary
+- 📊 **Chunk-based progress bar** — updates in real time as each chunk is processed
+- 📝 **Quiz generator** — creates Q&A pairs automatically from the summary (no LLM required)
 - 🌐 **Bilingual UI** — Turkish and English interface
 - ⬇️ **Download summary & quiz** — as `.txt` files
 
@@ -92,8 +97,11 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 # source .venv/bin/activate  # Mac/Linux
 
-# 3. Install dependencies
-pip install -r requirements.txt
+# 3. Install dependencies (via pyproject.toml — recommended)
+pip install -e .
+
+# Alternative: legacy requirements.txt
+# pip install -r requirements.txt
 
 # 4. Run the app
 streamlit run app.py
@@ -115,7 +123,8 @@ streamlit run app.py
 ```
 turkish-pdf-summarizer-quizzer/
 ├── app.py                  # Main Streamlit application
-├── requirements.txt        # Python dependencies
+├── pyproject.toml          # Package metadata & dependencies (recommended)
+├── requirements.txt        # Legacy dependency list
 └── src/
     ├── pdf_utils.py        # PDF text extraction (PyMuPDF)
     ├── chunking.py         # Text chunking logic
@@ -132,9 +141,11 @@ turkish-pdf-summarizer-quizzer/
 | Package | Purpose |
 |---------|---------|
 | `streamlit` | Web UI framework |
-| `transformers` | mT5 & FLAN-T5 models |
+| `transformers` | mT5 & FLAN-T5 model pipelines |
 | `torch` | Deep learning backend (CPU/GPU) |
-| `pymupdf` | PDF text extraction |
+| `sentencepiece` | mT5 tokenizer — required by `transformers` |
+| `accelerate` | Device mapping & half-precision model loading |
+| `pymupdf` | PDF text extraction (`import fitz`) |
 
 ## 📄 License
 
