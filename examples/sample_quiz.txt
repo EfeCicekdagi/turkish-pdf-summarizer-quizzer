@@ -1,0 +1,28 @@
+📝 Quiz — Türkçe PDF Özetleyici + Quiz Üretici
+================================================
+
+--- Soru 1 [Kısa Cevap] ---
+Osmanlı İmparatorluğu, 1299 yılında Anadolu'da küçük bir ________ olarak kurulmuştur.
+Cevap: beylik
+
+--- Soru 2 [Çoktan Seçmeli] ---
+Osmanlı İmparatorluğu hangi yılda resmen sona ermiştir?
+  A) 1453
+  B) 1699
+  C) 1856
+  D) 1922  ✓
+
+--- Soru 3 [Kısa Cevap] ---
+İstanbul'un fethi hangi yüzyılın ortalarında gerçekleşmiştir?
+Cevap: 15. yüzyıl
+
+--- Soru 4 [Çoktan Seçmeli] ---
+Osmanlı'nın en geniş sınırlarına ulaştığı dönem hangisidir?
+  A) 14. yüzyıl
+  B) 15. yüzyıl
+  C) 16. yüzyıl  ✓
+  D) 17. yüzyıl
+
+--- Soru 5 [Doğru/Yanlış] ---
+"Tanzimat ve Islahat Fermanları gibi modernleşme girişimleri Osmanlı'nın çöküşünü durdurmaya çalışmıştır."
+Cevap: Doğru
