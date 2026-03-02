@@ -32,7 +32,8 @@ Bu uygulama, Türkçe PDF dosyalarını (ya da yapıştırılan metinleri) otoma
 | Quiz modeli | `google/flan-t5-base` *(varsayılan)* | Apache 2.0 |
 | Quiz modeli (büyük) | `google/flan-t5-large` | Apache 2.0 |
 
-> Tüm modeller **Apache 2.0** lisansı ile yayımlanmıştır. Ticari kullanım, değiştirme ve dağıtım serbesttir; telif hakkı bildirimini korumak yeterlidir.
+> Tüm modeller Apache License 2.0 lisansı altındadır.
+> Model ağırlıkları bu depoda yer almamakta, çalışma anında indirilmektedir.
 
 ### Kurulum
 
@@ -96,7 +97,13 @@ A **Streamlit** web application that automatically summarizes Turkish PDF files 
 | Quiz model | `google/flan-t5-base` *(default)* | Apache 2.0 |
 | Quiz model (large) | `google/flan-t5-large` | Apache 2.0 |
 
-> All models are released under the **Apache 2.0** license — free for commercial use, modification, and distribution. Just preserve the copyright notice.
+> All models are licensed under Apache License 2.0. 
+> This repository does not redistribute model weights.
+
+### Third-Party Notice
+
+This project uses external models from HuggingFace under the Apache License 2.0.
+Model weights are downloaded at runtime and are not included in this repository.
 
 ### Installation
 
