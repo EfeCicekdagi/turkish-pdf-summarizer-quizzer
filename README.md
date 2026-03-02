@@ -142,23 +142,23 @@ streamlit run app.py
 
 ## 🧪 Örnek Çıktılar
 
-`examples/` klasörü, uygulamanin ne üreteceğine dair hazır örnekler içerir:
+`examples/` klasörü, uygulamanin ne üreteceğine dair gerçek bir çalışmadan alınmış örnekler içerir:
 
 | Dosya | Açıklama |
 |-------|---------|
-| [sample\_input.txt](examples/sample_input.txt) | Osmanlı İmparatorluğu hakkında örnek Türkçe metin |
-| [sample\_summary.txt](examples/sample_summary.txt) | Extractive mod ile üretilen özet |
-| [sample\_quiz.txt](examples/sample_quiz.txt) | 5 sorulu örnek quiz (kısa cevap + çoktan seçmeli + doğru/yanlış) |
+| [sample\_input.pdf](examples/sample_input.pdf) | Yapay Zekâ ve makine öğrenmesi üzerine örnek Türkçe PDF |
+| [sample\_summary.txt](examples/sample_summary.txt) | Extractive mod ile üretilmiş özet çıktısı |
+| [sample\_quiz.txt](examples/sample_quiz.txt) | 15 sorulu quiz (kısa cevap + çoktan seçmeli + doğru/yanlış + cevap anahtarı) |
 
 ## 🧪 Examples
 
-The `examples/` folder contains ready-made outputs showing what the app produces:
+The `examples/` folder contains real outputs produced by the app:
 
 | File | Description |
 |------|-------------|
-| [sample\_input.txt](examples/sample_input.txt) | Sample Turkish text about the Ottoman Empire |
+| [sample\_input.pdf](examples/sample_input.pdf) | Sample Turkish PDF about Artificial Intelligence and machine learning |
 | [sample\_summary.txt](examples/sample_summary.txt) | Extractive summary output |
-| [sample\_quiz.txt](examples/sample_quiz.txt) | 5-question quiz (fill-in-the-blank + multiple choice + true/false) |
+| [sample\_quiz.txt](examples/sample_quiz.txt) | 15-question quiz with answer key (fill-in-the-blank + multiple choice + true/false) |
 
 ## 🗂️ Proje Yapısı / Project Structure
 
